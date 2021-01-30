@@ -1,0 +1,6 @@
+click==7.1.2
+click-option-group==0.5.2
+colorz==1.0.3
+i3ipc==2.2.1
+Pillow==8.1.0
+screeninfo==0.6.7
