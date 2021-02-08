@@ -58,10 +58,25 @@ def is_image_in_scale(img_width, img_height, screen_width, screen_height):
     return True
 
 
+def backup_file(file):
+    file_path, file_name = os.path.split(os.path.abspath(file))
+    file_backup_path = os.path.join(file_path, 'backup')
+    backup_time = datetime.now().isoformat(timespec="seconds").replace(':', '-')
+    file_backup = os.path.join(
+        file_backup_path,
+        f"{file_name}_BACKUP_{backup_time}"
+    )
+
+    logger.debug(f"Backup file '{file_name}' from '{file_path}' to '{file_backup}'.")
+    if not os.path.exists(file_backup_path):
+        logger.debug(f"Backup path does not exist. Creating '{file_backup_path}'.")
+        os.mkdir(file_backup_path)
+    shutil.copy(file, file_backup)
+
+
 def get_image(image_path, orientation, scale=False):
     img_types = ['png', 'jpeg', 'jpg']
-    if scale:
-        screen_size = get_monitor_size()
+    screen_size = get_monitor_size() if scale else ""
 
     if os.path.isdir(image_path):
         images_in_dir = []
@@ -92,8 +107,7 @@ def get_image(image_path, orientation, scale=False):
 
 
 def set_colors(colors, colors_path):
-    logger.debug(f"Backup Xresources color file {colors_path}.")
-    shutil.copy(colors_path, colors_path+f"_BACKUP_{datetime.now().isoformat()}")
+    backup_file(colors_path)
 
     logger.debug(f"Read colors file {colors_path}.")
     with open(colors_path, 'r') as colors_file:
@@ -128,8 +142,7 @@ def format_rofi_color_line(line):
 
 
 def set_rofi_colors(colors, rofi_path):
-    logger.debug(f"Backup rofi theme file {rofi_path}.")
-    shutil.copy(rofi_path, rofi_path+f"_BACKUP_{datetime.now().isoformat()}")
+    backup_file(rofi_path)
 
     logger.debug(f"Read rofi file {rofi_path}.")
     with open(rofi_path, 'r') as rofi_file:
@@ -151,8 +164,7 @@ def set_rofi_colors(colors, rofi_path):
 
 
 def set_kitty_colors(colors, kitty_path):
-    logger.debug(f"Backup rofi theme file {kitty_path}.")
-    shutil.copy(kitty_path, kitty_path+f"_BACKUP_{datetime.now().isoformat()}")
+    backup_file(kitty_path)
 
     logger.debug(f"Read kitty config file {kitty_path}.")
     with open(kitty_path, 'r') as kitty_file:
