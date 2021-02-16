@@ -1,5 +1,5 @@
 # mytheme
-VERY rudimentary theming script which sets colorsfrom an image for i3, polybar, kitty and rofi
+VERY rudimentary theming script which sets colors from an image for i3, polybar, kitty and rofi
 
 ## Install
 ```
