@@ -165,6 +165,7 @@ def set_rofi_colors(colors, rofi_path):
 
 def set_kitty_colors(colors, kitty_path):
     backup_file(kitty_path)
+    colors = get_kitty_colors(colors)
 
     logger.debug(f"Read kitty config file {kitty_path}.")
     with open(kitty_path, 'r') as kitty_file:
@@ -220,12 +221,9 @@ def reload_i3():
     logger.debug(f"i3ipc reload command output: {ret_val}.")
 
 
-def generate_colors(img, colorz_params):
+def get_kitty_colors(orig_colors):
     colors = [((0, 0, 0), (105, 105, 105))]
-    with open(img, 'rb') as img_file:
-        colors += colorz.colorz(
-            img_file, n=6, bold_add=50,
-        )
+    colors += orig_colors[1:7]
     colors += [((255, 255, 255), (255, 255, 255))]
     return colors
 
@@ -265,7 +263,7 @@ def generate_colors(img, colorz_params):
 )
 @click.option('--debug/--no-debug', type=bool, help="Print debugging statements.")
 @optgroup.group("Colorz configuration", help="Specify additional colorz options.")
-@optgroup.option('--colorz-num-colors', type=int, default=6, help="number of colors to generate (excluding bold).")
+@optgroup.option('--colorz-num-colors', type=int, default=8, help="number of colors to generate (excluding bold).")
 @optgroup.option('--colorz-minv', type=click.IntRange(min=0, max=255), default=170, help="minimum value for the colors. Default: 170")
 @optgroup.option('--colorz-maxv', type=click.IntRange(min=0, max=255), default=200, help="maximum value for the colors. Default: 200")
 @optgroup.option('--colorz-bold', type=int, default=50, help="how much value to add for bold colors. Default: 50")
@@ -274,7 +272,14 @@ def main(image_path, xresources_color_file, rofi_theme_file, kitty_config_file, 
     img = get_image(image_path, orientation, no_scaling)
     logger.info(f"Selected image {img}")
 
-    colors = generate_colors(img, colorz_params)
+    with open(img, 'rb') as img_file:
+        colors = colorz.colorz(
+            img_file,
+            n=colorz_params['colorz_num_colors'],
+            min_v=colorz_params['colorz_minv'],
+            max_v=colorz_params['colorz_maxv'],
+            bold_add=colorz_params['colorz_bold'],
+        )
 
     set_colors(colors, xresources_color_file)
     set_rofi_colors(colors, rofi_theme_file)
