@@ -6,8 +6,8 @@ import logging
 import subprocess
 from datetime import datetime
 
-import colorz
 import click
+import colorz
 from click_option_group import optgroup
 from i3ipc import Connection
 from screeninfo import get_monitors
@@ -176,8 +176,9 @@ def set_kitty_colors(colors, kitty_path):
         color_match = COLOR_REGEX.match(line)
         if color_match:
             color_num = int(color_match.group('color_num'))
-            new_color = colorz.hexify(colors[color_num if color_num <= 7 else color_num - 8][0if color_num <= 7 else 1])
-            line = line.replace(color_match.group('color'), new_color)
+            color_rgb = colors[color_num if color_num <= 7 else color_num - 8][0 if color_num <= 7 else 1]
+            color_hex = colorz.hexify(color_rgb)
+            line = line.replace(color_match.group('color'), color_hex)
         new_lines.append(line)
 
     with open(kitty_path, 'w') as kitty_file:
@@ -219,6 +220,16 @@ def reload_i3():
     logger.debug(f"i3ipc reload command output: {ret_val}.")
 
 
+def generate_colors(img, colorz_params):
+    colors = [((0, 0, 0), (105, 105, 105))]
+    with open(img, 'rb') as img_file:
+        colors += colorz.colorz(
+            img_file, n=6, bold_add=50,
+        )
+    colors += [((255, 255, 255), (255, 255, 255))]
+    return colors
+
+
 @click.command()
 @click.argument('image_path', type=click.Path(exists=True))
 @click.option(
@@ -254,7 +265,7 @@ def reload_i3():
 )
 @click.option('--debug/--no-debug', type=bool, help="Print debugging statements.")
 @optgroup.group("Colorz configuration", help="Specify additional colorz options.")
-@optgroup.option('--colorz-num-colors', type=int, default=8, help="number of colors to generate (excluding bold).")
+@optgroup.option('--colorz-num-colors', type=int, default=6, help="number of colors to generate (excluding bold).")
 @optgroup.option('--colorz-minv', type=click.IntRange(min=0, max=255), default=170, help="minimum value for the colors. Default: 170")
 @optgroup.option('--colorz-maxv', type=click.IntRange(min=0, max=255), default=200, help="maximum value for the colors. Default: 200")
 @optgroup.option('--colorz-bold', type=int, default=50, help="how much value to add for bold colors. Default: 50")
@@ -263,14 +274,7 @@ def main(image_path, xresources_color_file, rofi_theme_file, kitty_config_file, 
     img = get_image(image_path, orientation, no_scaling)
     logger.info(f"Selected image {img}")
 
-    with open(img, 'rb') as img_file:
-        colors = colorz.colorz(
-            img_file,
-            n=colorz_params['colorz_num_colors'],
-            min_v=colorz_params['colorz_minv'],
-            max_v=colorz_params['colorz_maxv'],
-            bold_add=colorz_params['colorz_bold'],
-        )
+    colors = generate_colors(img, colorz_params)
 
     set_colors(colors, xresources_color_file)
     set_rofi_colors(colors, rofi_theme_file)
