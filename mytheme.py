@@ -61,6 +61,14 @@ def is_image_in_scale(img_width, img_height, screen_width, screen_height):
 def backup_file(file):
     file_path, file_name = os.path.split(os.path.abspath(file))
     file_backup_path = os.path.join(file_path, 'backup')
+    existing_files = sorted([f for f in os.listdir(file_backup_path) if f.startswith(f"{file_name}_BACKUP_")])
+    if len(existing_files) > 10:
+        logger.info(f"Too many backups of {file_name} found. Only keeping the latest 10!")
+        for too_old_file in existing_files[11:]:
+            too_old_file = os.path.join(file_backup_path, too_old_file)
+            logger.debug(f"Remove too old file {too_old_file}.")
+            os.remove(too_old_file)
+
     backup_time = datetime.now().isoformat(timespec="seconds").replace(':', '-')
     file_backup = os.path.join(
         file_backup_path,
