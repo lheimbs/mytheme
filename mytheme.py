@@ -160,10 +160,14 @@ def set_rofi_colors(colors, rofi_path):
     new_color = colorz.hexify(colors[random.randint(0, len(colors)-1)][0]).replace('#', '')
     logger.debug(f"Using random color for rofi: #{new_color}.")
     for line in lines:
-        colors_rofi = [format_rofi_color_line(section) for section in line.split(',')]
+        #colors_rofi = [format_rofi_color_line(section) for section in line.split(',')]
 
-        if 'normal' in line or 'urgent' in line or 'active' in line:
-            line = line.replace(colors_rofi[1], new_color)
+        if 'color-fg:' in line:
+            newline = line.split('#')
+            line = newline[0] + f'#{new_color};\n'
+        if 'color-sel-bg:' in line:
+            newline = line.split('#')
+            line = newline[0] + f'#{new_color}77;\n'
         new_lines.append(line)
 
     with open(rofi_path, 'w') as rofi_file:
