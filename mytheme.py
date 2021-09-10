@@ -53,7 +53,9 @@ def is_image_oriented(img_width, img_height, orientation):
 
 
 def is_image_in_scale(img_width, img_height, screen_width, screen_height):
-    logger.debug(f"{img_width: 5} - {screen_width}, {img_height} - {screen_height}")
+    logger.debug(
+        f"{img_width: 5} - {screen_width}, {img_height} - {screen_height}"
+    )
     if img_width < screen_width or img_height < screen_height:
         return False
     return True
@@ -73,19 +75,24 @@ def backup_file(file):
     )
     if len(existing_files) > 10:
         logger.info(
-            f"Too many backups of {file_name} found. Only keeping the latest 10!"
+            f"Too many backups of {file_name} found. "
+            "Only keeping the latest 10!"
         )
         for too_old_file in existing_files[11:]:
             too_old_file = os.path.join(file_backup_path, too_old_file)
             logger.debug(f"Remove too old file {too_old_file}.")
             os.remove(too_old_file)
 
-    backup_time = datetime.now().isoformat(timespec="seconds").replace(":", "-")
-    file_backup = os.path.join(file_backup_path, f"{file_name}_BACKUP_{backup_time}")
+    backup_time = datetime.now().isoformat(timespec="seconds")\
+        .replace(":", "-")
+    file_backup = os.path.join(
+        file_backup_path, f"{file_name}_BACKUP_{backup_time}")
 
-    logger.debug(f"Backup file '{file_name}' from '{file_path}' to '{file_backup}'.")
+    logger.debug(
+        f"Backup file '{file_name}' from '{file_path}' to '{file_backup}'.")
     if not os.path.exists(file_backup_path):
-        logger.debug(f"Backup path does not exist. Creating '{file_backup_path}'.")
+        logger.debug(
+            f"Backup path does not exist. Creating '{file_backup_path}'.")
         os.mkdir(file_backup_path)
     shutil.copy(file, file_backup)
 
@@ -97,28 +104,31 @@ def get_image(image_path, orientation, scale=False):
     if os.path.isdir(image_path):
         images_in_dir = []
         for file in os.listdir(image_path):
-            if os.path.isfile(os.path.join(image_path, file)) and file.endswith(
-                tuple(img_types)
-            ):
+            if os.path.isfile(os.path.join(image_path, file)) \
+                    and file.endswith(tuple(img_types)):
                 logger.debug(f"Testing {file} for usable dimensions.")
                 img_path = os.path.join(image_path, file)
                 with Image.open(img_path) as image:
                     img_size = image.size
                     if is_image_oriented(*img_size, orientation):
-                        if scale and not is_image_in_scale(*img_size, *screen_size):
+                        if scale and \
+                                not is_image_in_scale(*img_size, *screen_size):
                             logger.info(
-                                f"Image size {img_size} is lower than screen size {screen_size}. "
+                                f"Image size {img_size} is lower than "
+                                f"screen size {screen_size}. "
                                 "Ignoring image."
                             )
                             continue
                         images_in_dir.append(img_path)
                     else:
                         logger.info(
-                            f"Ignoring image {file} because it is oriented vertically."
+                            f"Ignoring image {file} because "
+                            "it is oriented vertically."
                         )
             else:
                 logger.debug(
-                    f"{file} is not a file or does not end with one of {', '.join(img_types)}"
+                    f"{file} is not a file or does not end with one of "
+                    f"{', '.join(img_types)}"
                 )
 
         logger.debug(f"Selecting one image from {images_in_dir}.")
@@ -137,7 +147,8 @@ def set_colors(colors, colors_path):
     with open(colors_path, "r") as colors_file:
         lines = colors_file.readlines()
 
-    COLOR_REGEX = re.compile(r"^#define color(?P<color_num>\d\d?) (?P<color>.*$)")
+    COLOR_REGEX = re.compile(
+        r"^#define color(?P<color_num>\d\d?) (?P<color>.*$)")
     new_lines = []
     for line in lines:
         color_match = COLOR_REGEX.match(line)
@@ -148,7 +159,8 @@ def set_colors(colors, colors_path):
                 color_new = colorz.hexify(colors[color_num][0])
             else:
                 color_new = colorz.hexify(colors[color_num - 8][1])
-            logger.debug(f"Replacing color{color_num} {color_old} with {color_new}.")
+            logger.debug(
+                f"Replacing color{color_num} {color_old} with {color_new}.")
             line = line.replace(color_old, color_new)
         new_lines.append(line)
 
@@ -173,10 +185,11 @@ def set_rofi_colors(colors, rofi_path):
         lines = rofi_file.readlines()
 
     new_lines = []
-    new_color = colorz.hexify(colors[random.randint(0, len(colors) - 1)][0]).replace(
-        "#", ""
-    )
+    new_color = colorz.hexify(
+        colors[random.randint(0, len(colors) - 1)][0]
+    ).replace("#", "")
     logger.debug(f"Using random color for rofi: #{new_color}.")
+
     for line in lines:
         if 'color-fg:' in line:
             newline = line.split('#')
@@ -220,7 +233,8 @@ def set_kitty_colors(colors, kitty_path):
 
 
 def load_new_xrdb_colors():
-    ret_val = subprocess.run(["xrdb", "-load", os.path.expanduser("~/.Xresources")])
+    ret_val = subprocess.run(
+        ["xrdb", "-load", os.path.expanduser("~/.Xresources")])
     if ret_val.returncode == 0:
         logger.info("Successfully loaded new colors in xrdb.")
         return True
@@ -238,7 +252,8 @@ def set_new_background_image(img):
 
 
 def reload_polybar():
-    # with subprocess.Popen(['polybar-make'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
+    # with subprocess.Popen(['polybar-make'],
+    #   stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
     ret_val = subprocess.run(["polybar-make"], stdout=subprocess.DEVNULL)
     if ret_val.returncode == 0:
         logger.info("Successfully reloaded polybar.")
@@ -265,21 +280,24 @@ def get_kitty_colors(orig_colors):
 @click.option(
     "-c",
     "--xresources-color-file",
-    type=click.Path(exists=True, dir_okay=False, resolve_path=True, writable=True),
+    type=click.Path(
+        exists=True, dir_okay=False, resolve_path=True, writable=True),
     default=os.path.expanduser("~/.xcolors/my_colors"),
     help="Xresources file with color configuration.",
 )
 @click.option(
     "-r",
     "--rofi-theme-file",
-    type=click.Path(exists=True, dir_okay=False, resolve_path=True, writable=True),
+    type=click.Path(
+        exists=True, dir_okay=False, resolve_path=True, writable=True),
     default=os.path.expanduser("~/.config/rofi/theme.rasi"),
     help="Rofi config file containing color config.",
 )
 @click.option(
     "-k",
     "--kitty-config-file",
-    type=click.Path(exists=True, dir_okay=False, resolve_path=True, writable=True),
+    type=click.Path(
+        exists=True, dir_okay=False, resolve_path=True, writable=True),
     default=os.path.expanduser("~/.config/kitty/kitty.conf"),
     help="Kitty config file.",
 )
@@ -306,8 +324,10 @@ def get_kitty_colors(orig_colors):
         "scripts python environment and might not work properly."
     ),
 )
-@click.option("--debug/--no-debug", type=bool, help="Print debugging statements.")
-@optgroup.group("Colorz configuration", help="Specify additional colorz options.")
+@click.option("--debug/--no-debug", type=bool,
+    help="Print debugging statements.")
+@optgroup.group("Colorz configuration",
+    help="Specify additional colorz options.")
 @optgroup.option(
     "--colorz-num-colors",
     type=int,
@@ -368,4 +388,3 @@ def main(
 
 if __name__ == "__main__":
     main()
-
